@@ -1,0 +1,69 @@
+- name: install key
+  shell: apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
+
+- name: install repo
+  apt_repository: repo='deb [arch=amd64,i386,ppc64el] http://download.nus.edu.sg/mirror/mariadb/repo/10.3/ubuntu xenial main' state=present update_cache='yes'
+
+- name: install maridb
+  package: name={{ item }} state=present
+  with_items:
+    - mariadb-server
+    - libmysqlclient-dev
+    - gcc
+    - python3-pip
+    - python3-setuptools
+    - python3-dev
+
+- name: install mysqlclient
+  pip:
+    name:
+      - pip
+      - setuptools
+      - mysqlclient
+    state: latest
+
+- name: configure mariadb
+  replace:
+    path: /etc/mysql/my.cnf
+    regexp: ^bind-address
+    replace: bind-address = 0.0.0.0
+    backup: yes
+  notify:
+    - restart mariadb
+
+- name: update mysql root password for all root accounts
+  mysql_user: name=root host={{ item }} password={{ mysql_root_pass }}
+  with_items:
+   - 127.0.0.1
+   - ::1
+   - localhost
+
+- name: copy .my.cnf file with root password credentials
+  template:
+    src: my.cnf
+    dest: ~/.my.cnf
+    mode: 0600
+
+- name: service
+  service: name=mariadb state=started enabled=yes
+
+- meta: flush_handlers
+
+# Securing MySQL Server
+
+- name: ensure anonymous users are not in the database
+  mysql_user: name='' host={{ item }} state=absent
+  with_items:
+   - 127.0.0.1
+   - ::1
+   - localhost
+
+- name: remove the test database
+  mysql_db: name=test state=absent
+
+- name: Create the database's
+  mysql_db: name={{ drupal_db_name }} state=present
+
+- name: Create the database users
+  mysql_user: name={{ drupal_db_user }}  password={{ drupal_db_pass }}
+                priv="*.*:ALL" state=present host={{ hostvars['web-server']['ansible_default_ipv4']['address'] }}

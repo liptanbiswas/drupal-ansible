@@ -1,0 +1,18 @@
+- hosts: all
+  gather_facts: true
+  tasks:
+  - name: Update and upgrade apt packages
+    apt:
+      upgrade: yes
+      update_cache: yes
+
+- hosts: database
+  become: true
+  roles:
+    - mariadb
+- hosts: drupal
+  become: true
+  roles:
+    - php
+    - drupal
+    - nginx

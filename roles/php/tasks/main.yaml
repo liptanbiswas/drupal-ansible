@@ -1,0 +1,27 @@
+- name: install ondrej/php repo
+  apt_repository: repo='ppa:ondrej/php' state=present update_cache=yes
+
+- name: install php7.2
+  package: name={{ item }} state=present
+  with_items:
+    - php7.2
+    - php7.2-curl
+    - php7.2-gd
+    - php7.2-cli
+    - php7.2-mysql
+    - php7.2-xml
+    - php7.2-mbstring
+    - php7.2-fpm
+    - php7.2-json
+    - php7.2-intl
+    - php7.2-zip
+
+- name: start and enable service
+  service: name=php7.2-fpm state=started enabled=yes
+
+- name: modifying php.ini
+  template:
+    src: php.ini
+    dest: /etc/php/7.2/fpm/php.ini
+  notify:
+    - restart php7.2-fpm

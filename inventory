@@ -1,0 +1,8 @@
+[drupal]
+web-server  ansible_ssh_host=207.148.25.75 ansible_ssh_user=root
+
+[database]
+mariadb  ansible_ssh_host=207.246.94.31 ansible_ssh_user=root
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
