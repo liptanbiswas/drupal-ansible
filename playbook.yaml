@@ -1,7 +1,7 @@
 - hosts: all
   gather_facts: true
   tasks:
-  - name: Update and upgrade apt packages
+  - name: update and upgrade system packages
     apt:
       upgrade: yes
       update_cache: yes

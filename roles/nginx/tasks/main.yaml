@@ -1,7 +1,7 @@
-- name: Install nginx
+- name: install nginx web server
   apt: name=nginx state=latest
 
-- name: add certbot repo
+- name: add the certbot repository
   apt_repository: repo='ppa:certbot/certbot' state=present update_cache=yes
   when:
     - letsencrypt_generate == true
@@ -9,19 +9,16 @@
     - letsencrypt_email is defined
 
 - name: install certbot
-  become: true
   apt: name=certbot state=latest update_cache=yes
   when:
     - letsencrypt_generate == true
     - letsencrypt_domain is defined
     - letsencrypt_email is defined
 
-- name: start and enable service
+- name: start and enable nginx service
   service: name=nginx state=started enabled=yes
 
-- meta: flush_handlers
-
-- name: generate certificates
+- name: generate letsencrypt certificates
   shell: certbot certonly --webroot -w /var/www/html -d {{ letsencrypt_domain }} -n --agree-tos -m {{ letsencrypt_email }}
   args:
     creates: /etc/letsencrypt/live/{{ letsencrypt_domain }}
@@ -30,12 +27,12 @@
     - letsencrypt_domain is defined
     - letsencrypt_email is defined
 
-- name: remove default config
+- name: remove default nginx configuration
   file: name=/etc/nginx/sites-enabled/default state=absent
   notify:
     - restart nginx
 
-- name: generate config
+- name: generate a new configuration for Drupal
   template:
     src: drupal.conf
     dest: /etc/nginx/sites-enabled/drupal.conf
@@ -44,7 +41,7 @@
   notify:
     - restart nginx
 
-- name: cronjob
+- name: configure the certbot cronjob
   cron:
     name: letsencrypt_renewal
     special_time: weekly
@@ -53,3 +50,5 @@
     - letsencrypt_generate == true
     - letsencrypt_domain is defined
     - letsencrypt_email is defined
+
+- meta: flush_handlers

@@ -1,9 +1,9 @@
-- name: install composer
+- name: install the latest Composer
   shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer warn=False
   args:
     creates: /usr/local/bin/composer
 
-- name: install drush
+- name: clone Drush repository
   git:
     repo: https://github.com/drush-ops/drush.git
     version: "9.3.0"
@@ -14,7 +14,7 @@
   args:
     chdir: "/opt/drush"
 
-- name: Create drush bin Symbolic link
+- name: create Drush executable link
   file:
     src: /opt/drush/drush
     dest: /usr/local/bin/drush
@@ -23,41 +23,41 @@
 - name: install mysql client
   apt: name=mysql-client state=present
 
-- name: craete drupal install dir
+- name: create Drupal install directory
   file:
     path: "{{ drupal_site_path }}"
     state: directory
 
-- name: download latest drupal
+- name: clone Drupal repository
   git:
     repo: http://git.drupal.org/project/drupal.git
     version: "{{ drupal_version }}"
     dest: "{{ drupal_site_path }}"
 
-- name: Install Drupal dependencies with Composer
+- name: install Drupal dependencies with Composer
   shell: composer install
   args:
     chdir: "{{ drupal_site_path }}"
     creates: "{{ drupal_site_path }}/vendor/autoload.php"
 
-- name: drupal install
+- name: install Drupal
   shell: drush si -y --site-name="{{ drupal_site_name }}" --account-name={{ drupal_admin_username }} --account-pass="{{ drupal_admin_pass }}" --db-url=mysql://{{ drupal_db_user }}:{{ drupal_db_pass }}@{{ hostvars['mariadb']['ansible_default_ipv4']['address'] }}/{{ drupal_db_name }}
   args:
     chdir: "{{ drupal_site_path }}"
 
-- name: set ownership
+- name: set proper ownership
   file:
     path: "{{ drupal_site_path }}"
     owner: www-data
     group: www-data
     recurse: yes
 
-- name: Set permissions properly on settings php
+- name: set permissions on settings file
   file:
     path: "{{ drupal_site_path }}/sites/default/settings.php"
     mode: 0744
 
-- name: Set permissions properly on files directory
+- name: set permissions on files direcotry
   file:
     path: "{{ drupal_site_path }}/sites/default/files"
     mode: 0777

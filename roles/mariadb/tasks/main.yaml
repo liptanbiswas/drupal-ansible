@@ -1,10 +1,10 @@
-- name: install key
+- name: install mariadb key
   shell: apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
 
-- name: install repo
+- name: install mariadb repository
   apt_repository: repo='deb [arch=amd64,i386,ppc64el] http://download.nus.edu.sg/mirror/mariadb/repo/10.3/ubuntu xenial main' state=present update_cache='yes'
 
-- name: install maridb
+- name: install latest mariadb
   package: name={{ item }} state=present
   with_items:
     - mariadb-server
@@ -14,7 +14,7 @@
     - python3-setuptools
     - python3-dev
 
-- name: install mysqlclient
+- name: install python MySQL client
   pip:
     name:
       - pip
@@ -22,7 +22,7 @@
       - mysqlclient
     state: latest
 
-- name: configure mariadb
+- name: configure mariadb to bind to all addresses
   replace:
     path: /etc/mysql/my.cnf
     regexp: ^bind-address
@@ -49,8 +49,6 @@
 
 - meta: flush_handlers
 
-# Securing MySQL Server
-
 - name: ensure anonymous users are not in the database
   mysql_user: name='' host={{ item }} state=absent
   with_items:
@@ -61,9 +59,9 @@
 - name: remove the test database
   mysql_db: name=test state=absent
 
-- name: Create the database's
+- name: create a new database for Drupal
   mysql_db: name={{ drupal_db_name }} state=present
 
-- name: Create the database users
+- name: create a new database user for Drupal
   mysql_user: name={{ drupal_db_user }}  password={{ drupal_db_pass }}
                 priv="*.*:ALL" state=present host={{ hostvars['web-server']['ansible_default_ipv4']['address'] }}
