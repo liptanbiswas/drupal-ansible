@@ -1,3 +1,4 @@
+---
 - name: install ondrej/php repository
   apt_repository: repo='ppa:ondrej/php' state=present update_cache=yes
 
@@ -19,17 +20,19 @@
 - name: start and enable service
   service: name=php7.2-fpm state=started enabled=yes
 
-- name: modifying php.ini
-  template:
-    src: php.ini
-    dest: /etc/php/7.2/fpm/php.ini
-  notify:
-    - restart php7.2-fpm
+- name: setting timezone in php.ini
+  lineinfile:
+    path: /etc/php/7.2/fpm/php.ini
+    regexp: ^;date.timezone or ^date.timezone
+    line: date.timezone = {{ date_timezone }}
+    state: present
 
 - name: setting timezone in php.ini
-  replace:
+  lineinfile:
     path: /etc/php/7.2/fpm/php.ini
-    regexp: ^;date.timezone OR ^date.timezone
-    replace: date.timezone = {{ date_timezone }}
+    regexp: ^memory_limit
+    line: memory_limit = {{ memory_limit }}
+    state: present
 
-- meta: flush_handlers
+- name: restart php7.2-fpm
+  service: name=php7.2-fpm state=restarted

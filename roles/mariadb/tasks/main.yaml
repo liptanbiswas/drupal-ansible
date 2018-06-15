@@ -1,8 +1,9 @@
+---
 - name: install mariadb key
   shell: apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
 
 - name: install mariadb repository
-  apt_repository: repo='deb [arch=amd64,i386,ppc64el] http://download.nus.edu.sg/mirror/mariadb/repo/10.3/ubuntu xenial main' state=present update_cache='yes'
+  apt_repository: repo='deb [arch=amd64,i386,ppc64el] http://download.nus.edu.sg/mirror/mariadb/repo/10.3/ubuntu xenial main' state=present update_cache=yes
 
 - name: install latest mariadb
   package: name={{ item }} state=present
@@ -10,23 +11,24 @@
     - mariadb-server
     - libmysqlclient-dev
     - gcc
-    - python3-pip
-    - python3-setuptools
     - python3-dev
+
+- name: install the latest pip
+  shell: curl https://bootstrap.pypa.io/get-pip.py | python3 warn=False
 
 - name: install python MySQL client
   pip:
     name:
-      - pip
       - setuptools
       - mysqlclient
     state: latest
 
 - name: configure mariadb to bind to all addresses
-  replace:
+  lineinfile:
     path: /etc/mysql/my.cnf
     regexp: ^bind-address
-    replace: bind-address = 0.0.0.0
+    line: bind-address = 0.0.0.0
+    state: present
     backup: yes
   notify:
     - restart mariadb
@@ -64,4 +66,4 @@
 
 - name: create a new database user for Drupal
   mysql_user: name={{ drupal_db_user }}  password={{ drupal_db_pass }}
-                priv="*.*:ALL" state=present host={{ hostvars['web-server']['ansible_default_ipv4']['address'] }}
+                priv="{{ drupal_db_name }}.*:ALL" state=present host={{ hostvars['web-server']['ansible_default_ipv4']['address'] }}

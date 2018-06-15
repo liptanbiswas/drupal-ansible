@@ -1,7 +1,11 @@
+---
 - name: install the latest Composer
   shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer warn=False
   args:
     creates: /usr/local/bin/composer
+
+- name: install git
+  package: name=git state=latest
 
 - name: clone Drush repository
   git:
@@ -14,16 +18,16 @@
   args:
     chdir: "/opt/drush"
 
-- name: create Drush executable link
+- name: create the Drush executable link
   file:
     src: /opt/drush/drush
     dest: /usr/local/bin/drush
     state: link
 
 - name: install mysql client
-  apt: name=mysql-client state=present
+  package: name=mysql-client state=present
 
-- name: create Drupal install directory
+- name: create the Drupal install directory
   file:
     path: "{{ drupal_site_path }}"
     state: directory
@@ -41,7 +45,7 @@
     creates: "{{ drupal_site_path }}/vendor/autoload.php"
 
 - name: install Drupal
-  shell: drush si -y --site-name="{{ drupal_site_name }}" --account-name={{ drupal_admin_username }} --account-pass="{{ drupal_admin_pass }}" --db-url=mysql://{{ drupal_db_user }}:{{ drupal_db_pass }}@{{ hostvars['mariadb']['ansible_default_ipv4']['address'] }}/{{ drupal_db_name }}
+  shell: drush si -y --site-name="{{ drupal_site_name }}" --account-name={{ drupal_admin_username }} --account-pass="{{ drupal_admin_pass }}" --db-url=mysql://{{ drupal_db_user }}:{{ drupal_db_pass }}@{{ hostvars['db-server']['ansible_default_ipv4']['address'] }}/{{ drupal_db_name }}
   args:
     chdir: "{{ drupal_site_path }}"
 
@@ -52,7 +56,7 @@
     group: www-data
     recurse: yes
 
-- name: set permissions on settings file
+- name: set permissions on the settings file
   file:
     path: "{{ drupal_site_path }}/sites/default/settings.php"
     mode: 0744

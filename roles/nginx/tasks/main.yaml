@@ -1,5 +1,9 @@
+---
+- name: remove Apache web server
+  package: name=apache2 state=absent
+ 
 - name: install nginx web server
-  apt: name=nginx state=latest
+  package: name=nginx state=present
 
 - name: add the certbot repository
   apt_repository: repo='ppa:certbot/certbot' state=present update_cache=yes
@@ -9,7 +13,7 @@
     - letsencrypt_email is defined
 
 - name: install certbot
-  apt: name=certbot state=latest update_cache=yes
+  package: name=python-certbot-nginx state=latest update_cache=yes
   when:
     - letsencrypt_generate == true
     - letsencrypt_domain is defined
@@ -19,7 +23,7 @@
   service: name=nginx state=started enabled=yes
 
 - name: generate letsencrypt certificates
-  shell: certbot certonly --webroot -w /var/www/html -d {{ letsencrypt_domain }} -n --agree-tos -m {{ letsencrypt_email }}
+  shell: certbot certonly --nginx -d {{ letsencrypt_domain }} -n --agree-tos -m {{ letsencrypt_email }}
   args:
     creates: /etc/letsencrypt/live/{{ letsencrypt_domain }}
   when:
